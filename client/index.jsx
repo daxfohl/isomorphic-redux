@@ -14,6 +14,7 @@ import Immutable from 'immutable';
 const history = createBrowserHistory();
 
 const reducer = combineReducers(reducers);
+console.log(window.__INITIAL_STATE__);
 const store   = applyMiddleware(promiseMiddleware)(createStore)(reducer, window.__INITIAL_STATE__);
 
 render(

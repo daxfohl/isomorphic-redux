@@ -7,18 +7,19 @@ import { connect }            from 'react-redux';
 
 class Home extends Component {
   static propTypes = {
-    todos:    PropTypes.any.isRequired,
-    dispatch: PropTypes.func.isRequired
+    todos:  PropTypes.any.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    editId: PropTypes.number,
+    deleteId: PropTypes.number
   };
 
   render() {
-    const { todos, dispatch } = this.props;
-
+    const { todos, dispatch, routeParams, history } = this.props;
+    const { editId, deleteId } = routeParams;
     return (
       <div id="todo-list">
-        <TodosView todos={todos}
+        <TodosView todos={todos} editId={editId} deleteId={deleteId} history={history}
           {...bindActionCreators(TodoActions, dispatch)} />
-
         <TodosForm
           {...bindActionCreators(TodoActions, dispatch)}/>
       </div>

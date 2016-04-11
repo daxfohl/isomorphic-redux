@@ -5,6 +5,8 @@ import Home                    from 'components/Home';
 
 export default (
   <Route name="app" component={App} path="/">
-      <IndexRoute component={Home}/>
+    <IndexRoute component={Home}/>
+    <Route path="/edit/:editId" component={Home}/>
+    <Route path="/delete/:deleteId" component={Home}/>
   </Route>
 );

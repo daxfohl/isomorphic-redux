@@ -135,7 +135,7 @@ app.use( (req, res) => {
       console.error(err);
       process.exit(1);
     }
-    const initialState = {todos: {list: JSON.parse(data)}};
+    const initialState = {todos: JSON.parse(data)};
     const location = createLocation(req.url);
     const reducer  = combineReducers(reducers);
     const store   = applyMiddleware(promiseMiddleware)(createStore)(reducer, initialState);
