@@ -30,3 +30,24 @@ export function deleteTodo(id) {
     promise: request.post('/api/todo/delete', { id })
   };
 }
+
+export function showEditTodoForm(id) {
+  return {
+    type: 'SHOW_EDIT_TODO_FORM',
+    id
+  };
+}
+
+
+export function showDeleteTodoForm(id) {
+  return {
+    type: 'SHOW_DELETE_TODO_FORM',
+    id
+  };
+}
+
+export function hideForms() {
+  return {
+    type: 'HIDE_FORMS'
+  };
+}

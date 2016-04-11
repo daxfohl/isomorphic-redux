@@ -11,12 +11,10 @@ import { createStore,
          applyMiddleware }  from 'redux';
 import Immutable from 'immutable';
 
-const initialState = {todos: new Immutable.List(window.__INITIAL_STATE__.todos)};
-
 const history = createBrowserHistory();
 
 const reducer = combineReducers(reducers);
-const store   = applyMiddleware(promiseMiddleware)(createStore)(reducer, initialState);
+const store   = applyMiddleware(promiseMiddleware)(createStore)(reducer, window.__INITIAL_STATE__);
 
 render(
   <Provider store={store}>
