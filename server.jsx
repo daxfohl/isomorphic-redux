@@ -1,4 +1,5 @@
 import express                   from 'express';
+import bodyParser                from 'body-parser';
 import React                     from 'react';
 import { renderToString }        from 'react-dom/server'
 import { RoutingContext, match } from 'react-router';
@@ -7,11 +8,12 @@ import routes                    from 'routes';
 import { Provider }              from 'react-redux';
 import * as reducers             from 'reducers';
 import promiseMiddleware         from 'lib/promiseMiddleware';
-import fetchComponentData        from 'lib/fetchComponentData';
 import { createStore,
          combineReducers,
          applyMiddleware }       from 'redux';
 import path                      from 'path';
+import fs                        from 'fs';
+import Immutable                 from 'immutable';
 
 const app = express();
 
@@ -20,22 +22,133 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.use(express.static(path.join(__dirname, 'dist')));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+
+var TODO_FILE = path.join(__dirname, 'todo.json');
+app.get('/api/todo/list', function(req, res) {
+  fs.readFile(TODO_FILE, function(err, data) {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    res.json(JSON.parse(data));
+  });
+});
+
+app.post('/api/todo/create', function(req, res) {
+  fs.readFile(TODO_FILE, function(err, data) {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    var comments = JSON.parse(data);
+    if(req.body.text.trim()) {
+      var newComment = {
+        id: Date.now(),
+        text: req.body.text,
+      };
+      comments.push(newComment);
+    }
+    fs.writeFile(TODO_FILE, JSON.stringify(comments, null, 4), function(err) {
+      if (err) {
+        console.error(err);
+        process.exit(1);
+      }
+      switch (req.accepts('html', 'json')) {
+        case 'json':
+          res.json(comments);
+          break;
+        default:
+          res.redirect('/')
+      }
+    });
+  });
+});
+
+app.post('/api/todo/update', function(req, res) {
+  fs.readFile(TODO_FILE, function(err, data) {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    var comments = JSON.parse(data);
+    if(req.body.text.trim()) {
+      for(var i = 0; i < comments.length; ++i) {
+        if (comments[i].id == req.body.id) {
+          comments[i].text = req.body.text;
+        }
+      }
+    }
+    fs.writeFile(TODO_FILE, JSON.stringify(comments, null, 4), function(err) {
+      if (err) {
+        console.error(err);
+        process.exit(1);
+      }
+      switch (req.accepts('html', 'json')) {
+        case 'json':
+          res.json(comments);
+          break;
+        default:
+          res.redirect('/')
+      }
+    });
+  });
+});
+
+app.post('/api/todo/delete', function(req, res) {
+  fs.readFile(TODO_FILE, function(err, data) {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    var comments = JSON.parse(data);
+    var index = -1;
+    for (var i = 0; i < comments.length; ++i) {
+      if (comments[i].id == req.body.id) {
+        index = i;
+      }
+    }
+    if (index != -1) {
+      comments.splice(index, 1);
+    }
+    fs.writeFile(TODO_FILE, JSON.stringify(comments, null, 4), function(err) {
+      if (err) {
+        console.error(err);
+        process.exit(1);
+      }
+      switch (req.accepts('html', 'json')) {
+        case 'json':
+          res.json(comments);
+          break;
+        default:
+          res.redirect('/')
+      }
+    });
+  });
+});
+
 
 app.use( (req, res) => {
-  const location = createLocation(req.url);
-  const reducer  = combineReducers(reducers);
-  const store    = applyMiddleware(promiseMiddleware)(createStore)(reducer);
-
-  match({ routes, location }, (err, redirectLocation, renderProps) => {
-    if(err) {
+  fs.readFile(TODO_FILE, function(err, data) {
+    if (err) {
       console.error(err);
-      return res.status(500).end('Internal server error');
+      process.exit(1);
     }
+    var initialState = {todos: new Immutable.List(JSON.parse(data))};
+    const location = createLocation(req.url);
+    const reducer  = combineReducers(reducers);
+    const store   = applyMiddleware(promiseMiddleware)(createStore)(reducer, initialState);
 
-    if(!renderProps)
-      return res.status(404).end('Not found');
+    match({ routes, location }, (err, redirectLocation, renderProps) => {
+      if(err) {
+        console.error(err);
+        return res.status(500).end('Internal server error');
+      }
 
-    function renderView() {
+      if(!renderProps)
+        return res.status(404).end('Not found');
+
       const InitialView = (
         <Provider store={store}>
           <RoutingContext {...renderProps} />
@@ -43,8 +156,6 @@ app.use( (req, res) => {
       );
 
       const componentHTML = renderToString(InitialView);
-
-      const initialState = store.getState();
 
       const HTML = `
       <!DOCTYPE html>
@@ -64,13 +175,8 @@ app.use( (req, res) => {
       </html>
       `;
 
-      return HTML;
-    }
-
-    fetchComponentData(store.dispatch, renderProps.components, renderProps.params)
-      .then(renderView)
-      .then(html => res.end(html))
-      .catch(err => res.end(err.message));
+      res.end(HTML);
+    });
   });
 });
 

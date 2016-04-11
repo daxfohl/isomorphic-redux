@@ -6,12 +6,12 @@ import { Provider }         from 'react-redux';
 import * as reducers        from 'reducers';
 import routes               from 'routes';
 import promiseMiddleware    from 'lib/promiseMiddleware';
-import immutifyState        from 'lib/immutifyState';
 import { createStore,
          combineReducers,
          applyMiddleware }  from 'redux';
+import Immutable from 'immutable';
 
-const initialState = immutifyState(window.__INITIAL_STATE__);
+const initialState = {todos: new Immutable.List(window.__INITIAL_STATE__.todos)};
 
 const history = createBrowserHistory();
 

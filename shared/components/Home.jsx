@@ -11,10 +11,6 @@ class Home extends Component {
     dispatch: PropTypes.func.isRequired
   };
 
-  static needs = [
-    TodoActions.getTodos
-  ];
-
   render() {
     const { todos, dispatch } = this.props;
 
